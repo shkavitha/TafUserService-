@@ -3,12 +3,12 @@ package com.tekarch.TafUserMS.Controllers;
 import com.tekarch.TafUserMS.Model.UsersDTO;
 import com.tekarch.TafUserMS.Services.UserServiceImpl;
 
-import jakarta.transaction.Transactional;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.RestTemplate;
 import lombok.Data;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 
 import java.util.List;
 import java.util.Optional;
@@ -30,14 +30,24 @@ public class UserController {
     }
 
 
+//    @GetMapping("/{userId}")
+//    public ResponseEntity<UsersDTO> getUserById(@PathVariable Long userId) {
+//        Optional<UsersDTO> uid = usersServiceImpl.getUserById(userId);
+//        return uid.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
+//                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+//
+//    }
+
     @GetMapping("/{userId}")
     public ResponseEntity<UsersDTO> getUserById(@PathVariable Long userId) {
-        Optional<UsersDTO> uid = usersServiceImpl.getUserById(userId);
-        return uid.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
-                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
-
+        UsersDTO user = usersServiceImpl.getUserById(userId);
+        if (user == null) {
+            // Return 404 if user is not found
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+        // Return 200 OK if user is found
+        return ResponseEntity.ok(user);
     }
-
 
 
     @GetMapping
@@ -50,22 +60,55 @@ public class UserController {
     }
 
     @PutMapping("/{userId}")
-    public ResponseEntity<Void> updateUser(@PathVariable Long userId, @RequestBody UsersDTO user) {
+    public ResponseEntity<UsersDTO> updateUser(@PathVariable Long userId, @RequestBody UsersDTO user) {
         try {
-            usersServiceImpl.updateUser(userId, user);
-            return ResponseEntity.noContent().build();
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(500).build();
+            // Attempt to update the user
+            UsersDTO updatedUser = usersServiceImpl.updateUser(userId, user);
+            return ResponseEntity.ok(updatedUser); // Return the updated user data with 200 OK status
+        } catch (HttpClientErrorException.NotFound e) {
+            // If user not found, return 404 Not Found
+            String errorMessage = "User with ID " + userId + " not found.";
+//            logger.error(errorMessage, e);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        } catch (HttpClientErrorException.BadRequest e) {
+            // If the request is invalid (e.g., malformed data), return 400 Bad Request
+            String errorMessage = "Invalid data provided for the user update.";
+//            logger.error(errorMessage, e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        } catch (HttpServerErrorException.InternalServerError e) {
+            // If server error occurs (e.g., database issues), return 500 Internal Server Error
+            String errorMessage = "Internal server error occurred while updating user.";
+//            logger.error(errorMessage, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        } catch (Exception e) {
+            // Catch any other unexpected errors and return 500 Internal Server Error
+            String errorMessage = "Unexpected error occurred while updating user.";
+//            logger.error(errorMessage, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
-        try {
-            usersServiceImpl.deleteUser(id);
-            return ResponseEntity.noContent().build();
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(500).build();
-        }
+
+//    @DeleteMapping("/{id}")
+//    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+//        try {
+//            usersServiceImpl.deleteUser(id);
+//            return ResponseEntity.noContent().build();
+//        } catch (RuntimeException e) {
+//            return ResponseEntity.status(500).build();
+//        }
+//    }
+@DeleteMapping("/{id}")
+public ResponseEntity<String> deleteUser(@PathVariable Long id) {
+    try {
+        usersServiceImpl.deleteUser(id);
+        return ResponseEntity.noContent().build(); // HTTP 204: No Content
+    } catch (UserNotFoundException e) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage()); // HTTP 404: Not Found
+    } catch (RuntimeException e) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("An error occurred while deleting the user."); // HTTP 500: Internal Server Error
     }
+}
+
 }
