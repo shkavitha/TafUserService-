@@ -13,6 +13,10 @@ java {
 	}
 }
 
+bootJar {
+	archiveFileName = 'TafUserMS.jar'
+}
+
 repositories {
 	mavenCentral()
 }
