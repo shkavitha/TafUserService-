@@ -54,6 +54,7 @@ public class UserServiceImpl implements UsersService {
 
     public UsersDTO getUserById(Long userId) {
         try {
+            System.out.println("crudServiceURL::"+crudServiceUrl);
             // Use RestTemplate to fetch user data from the external service
             return restTemplate.getForObject(crudServiceUrl+"/" + userId, UsersDTO.class);
         } catch (HttpClientErrorException.NotFound e) {
