@@ -23,10 +23,13 @@ public class UserServiceImpl implements UsersService {
 
 
     public UsersDTO createUser(UsersDTO user) {
-        String url = crudServiceUrl ;
+        //String url = crudServiceUrl ;
+        System.out.println("crudServiceURL::"+crudServiceUrl);
         try {
-            return restTemplate.postForObject(url, user, UsersDTO.class);
+            return restTemplate.postForObject(crudServiceUrl+"/register", user, UsersDTO.class);
         } catch (HttpClientErrorException | HttpServerErrorException e) {
+            System.out.println("err::"+e.getStatusCode());
+            //System.out.println("err::"+e.getStackTrace().toString());
             throw new RuntimeException("Failed to create user: " + e.getResponseBodyAsString(), e);
         } catch (Exception e) {
             throw new RuntimeException("An unexpected error occurred while creating user", e);

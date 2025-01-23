@@ -23,20 +23,14 @@ public class UserController {
     @PostMapping("/register")
     public ResponseEntity<UsersDTO> registerUser(@RequestBody UsersDTO userobj) {
         try {
+            System.out.println("Inside register::" + userobj.getUsername());
             return ResponseEntity.ok(usersServiceImpl.createUser(userobj));
         } catch (RuntimeException e) {
-            return ResponseEntity.status(500).body(null);
+            System.out.println(e.getMessage());
+            return ResponseEntity.status(500).body(userobj);
         }
     }
 
-
-//    @GetMapping("/{userId}")
-//    public ResponseEntity<UsersDTO> getUserById(@PathVariable Long userId) {
-//        Optional<UsersDTO> uid = usersServiceImpl.getUserById(userId);
-//        return uid.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
-//                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
-//
-//    }
 
     @GetMapping("/{userId}")
     public ResponseEntity<UsersDTO> getUserById(@PathVariable Long userId) {
