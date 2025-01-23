@@ -34,9 +34,13 @@ public class UserServiceImpl implements UsersService {
     }
 
     public List<UsersDTO> getAllUsers(){
+        System.out.println("crudServiceURL::"+crudServiceUrl);
         try {
             // Get the response as an array of User objects
             UsersDTO[] usersArray = restTemplate.getForObject(crudServiceUrl, UsersDTO[].class);
+            if (usersArray == null) {
+                throw new RuntimeException("No users found: Received null response");
+            }
             return Arrays.asList(usersArray);  // Convert the array to a list
         } catch (HttpClientErrorException.NotFound e) {
             throw new RuntimeException("No users found: " + e.getMessage(), e);
